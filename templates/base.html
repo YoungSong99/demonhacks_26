@@ -1,0 +1,19 @@
+<!doctype html>
+<html class="h-full">
+  <head>
+      <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+      <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+      <script defer src="/static/js/alpine-init.js"></script>
+  </head>
+  <body class="min-h-screen flex flex-col bg-[url('/static/images/bg.png')]
+         bg-black
+         bg-no-repeat
+         bg-left-top
+         bg-[length:100%_132.187%]">
+    {% include "components/nav.html" %}
+    <main>
+      {% block content %}{% endblock %}
+    </main>
+  </body>
+</html>
+

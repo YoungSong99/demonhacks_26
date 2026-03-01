@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% from "components/card.html" import glass_card %}
+
+{% block content %}
+<section class="min-h-screen flex flex-col items-center justify-center px-6">
+
+  {% call(caller) glass_card(class="w-[70vw]") %}
+  <form
+    action="/aging"
+    method="POST"
+    enctype="multipart/form-data"
+    x-data="{ step: 1 }"
+  >
+
+    <!-- ───── STEP 1 ───── -->
+    <div x-show="step === 1" x-transition class="flex flex-col gap-6">
+
+      <p class="text-xs font-semibold tracking-widest text-white/40 uppercase font-[Inter]">Step 1</p>
+
+      <div class="flex flex-col gap-2">
+        <h1 class="text-3xl font-semibold text-white leading-snug font-[Inter]">
+          See them through time
+        </h1>
+        <p class="text-sm text-white/50 font-[Inter]">
+          Upload a photo and choose an age. We'll show you who they might have become.
+        </p>
+      </div>
+
+      <!-- Age Input -->
+      <div class="flex flex-col gap-2">
+        <label for="age-input" class="text-sm font-semibold text-white font-[Inter]">Age them to</label>
+        <input
+          id="age-input"
+          name="age"
+          type="number"
+          min="1"
+          max="100"
+          placeholder="Enter any age between 1 and 100"
+          {% if prev_age %}value="{{ prev_age }}"{% endif %}
+          class="w-full bg-white text-gray-400 text-sm font-[Inter]
+                 rounded-xl px-4 py-3 placeholder-gray-400
+                 focus:outline-none focus:ring-2 focus:ring-white/30
+                 transition-all duration-200
+                 [appearance:textfield]
+                 [&::-webkit-outer-spin-button]:appearance-none
+                 [&::-webkit-inner-spin-button]:appearance-none"
+        />
+      </div>
+
+      <!-- Photo Upload -->
+      <div class="flex flex-col gap-2">
+        <label class="text-sm font-semibold text-white font-[Inter]">Their Photo</label>
+        {% if prev_image_url %}
+        <div class="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+          <img src="{{ prev_image_url }}" class="w-10 h-10 rounded-lg object-cover" />
+          <p class="text-sm text-white/60 font-[Inter]">이전 사진 사용 중 — 새 파일을 올리면 교체됩니다</p>
+        </div>
+        {% endif %}
+        <label
+          for="photo-input"
+          x-data="{ dragging: false, fileName: null }"
+          @dragover.prevent="dragging = true"
+          @dragleave.prevent="dragging = false"
+          @drop.prevent="dragging = false; fileName = $event.dataTransfer.files[0]?.name; $refs.photoInput.files = $event.dataTransfer.files"
+          :class="dragging ? 'bg-gray-100' : 'bg-white'"
+          class="flex flex-col items-center justify-center gap-3
+                 rounded-xl cursor-pointer h-36
+                 transition-all duration-200 hover:bg-gray-50"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M3 16.5V19a1.5 1.5 0 001.5 1.5h15A1.5 1.5 0 0021 19v-2.5M16 8l-4-4m0 0L8 8m4-4v12" />
+          </svg>
+          <p class="text-sm text-gray-400 font-[Inter]"
+             x-text="fileName ? fileName : 'Upload a clear photo of their face'"></p>
+          <input
+            x-ref="photoInput"
+            id="photo-input"
+            name="photo"
+            type="file"
+            accept="image/*"
+            class="hidden"
+            @change="fileName = $event.target.files[0]?.name"
+          />
+        </label>
+      </div>
+
+      <!-- Next -->
+      <div>
+        <button
+          type="submit"
+          class="bg-black text-white font-medium text-sm font-[Inter]
+                 border border-white/30 rounded-full px-8 py-3
+                 hover:bg-white/10 active:scale-[0.98]
+                 transition-all duration-200"
+        >
+          Next
+        </button>
+      </div>
+
+    </div>
+
+  </form>
+  {% endcall %}
+
+</section>
+{% endblock %}
