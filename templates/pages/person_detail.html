@@ -1,0 +1,289 @@
+{% extends "base.html" %}
+{% from "components/card.html" import glass_card %}
+
+{% block content %}
+<section class="h-screen flex items-center justify-center px-6">
+
+  {% call(caller) glass_card(class="w-[85vw] max-h-[90vh] flex flex-col overflow-hidden") %}
+
+    <!-- Back + Case ID -->
+    <div class="flex items-center justify-between mb-6">
+      <a href="/find" class="flex items-center gap-2 text-sm text-white/40 hover:text-white/80 transition-colors duration-200">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Back to Gallery
+      </a>
+      <span class="text-xs text-white/25 tracking-widest uppercase">Case #JH-2019</span>
+    </div>
+
+    <!-- Main layout: left panel | right info -->
+    <div class="flex gap-10 flex-1 min-h-0"
+         x-data="{ tab: 'photo', splatReady: false, async showSplat() { if (this.splatReady) return; this.splatReady = true; await this.$nextTick(); window.initSplatViewer && window.initSplatViewer(); } }"
+    >
+
+      <!-- ── LEFT: Tab switcher + views ── -->
+      <div class="w-[40%] shrink-0 flex flex-col min-h-0 gap-3">
+
+        <!-- Tab buttons -->
+        <div class="flex gap-2">
+          <button
+            @click="tab = 'photo'"
+            :class="tab === 'photo' ? 'bg-white text-black' : 'bg-white/10 text-white/60 hover:bg-white/15'"
+            class="flex-1 text-xs font-semibold rounded-full px-4 py-2 transition-all duration-200"
+          >
+            Photo
+          </button>
+          <button
+            @click="tab = '3d'; showSplat()"
+            :class="tab === '3d' ? 'bg-white text-black' : 'bg-white/10 text-white/60 hover:bg-white/15'"
+            class="flex-1 text-xs font-semibold rounded-full px-4 py-2 transition-all duration-200"
+          >
+            3D View
+          </button>
+        </div>
+
+        <!-- Photo tab: before/after slider -->
+        <div x-show="tab === 'photo'" class="flex-1 flex flex-col min-h-0">
+          <div
+            x-data="{ pos: 50, dragging: false }"
+            @mousedown.prevent="dragging = true"
+            @mouseup.window="dragging = false"
+            @mousemove.window="if (dragging) {
+              let r = $el.getBoundingClientRect();
+              pos = Math.min(97, Math.max(3, (($event.clientX - r.left) / r.width) * 100));
+            }"
+            @touchstart.prevent="dragging = true"
+            @touchend.window="dragging = false"
+            @touchmove.window.prevent="if (dragging) {
+              let r = $el.getBoundingClientRect();
+              pos = Math.min(97, Math.max(3, (($event.touches[0].clientX - r.left) / r.width) * 100));
+            }"
+            class="relative select-none overflow-hidden rounded-2xl flex-1 min-h-0 cursor-ew-resize"
+          >
+            <!-- Aged photo (background) -->
+            <img src="https://placehold.co/600x800/111/444?text=Aged"
+                 class="absolute inset-0 w-full h-full object-cover" />
+            <!-- Original photo (clipped left) -->
+            <div class="absolute inset-0 overflow-hidden" :style="`width: ${pos}%`">
+              <img src="https://placehold.co/600x800/1a1a1a/666?text=Then"
+                   class="absolute inset-0 h-full object-cover" style="min-width: 100%" />
+            </div>
+            <!-- Divider -->
+            <div class="absolute top-0 bottom-0 w-[2px] bg-white/80 pointer-events-none"
+                 :style="`left: calc(${pos}% - 1px)`">
+              <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
+                          w-9 h-9 bg-white rounded-full shadow-xl flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8 9l-4 3 4 3M16 9l4 3-4 3"/>
+                </svg>
+              </div>
+            </div>
+            <!-- Labels -->
+            <div class="absolute top-3 left-3 text-xs text-white bg-black/60 rounded-full px-3 py-1 pointer-events-none">Then</div>
+            <div class="absolute top-3 right-3 text-xs text-white bg-black/60 rounded-full px-3 py-1 pointer-events-none">Now</div>
+          </div>
+          <p class="text-xs text-white/20 text-center mt-2">Drag to compare · AI-generated estimate</p>
+        </div>
+
+        <!-- 3D tab: Spark.js viewer -->
+        <div x-show="tab === '3d'" class="flex-1 flex flex-col min-h-0">
+          <div class="relative flex-1 min-h-0 rounded-2xl overflow-hidden border border-white/10 bg-white/5">
+            <canvas id="splat-canvas" class="w-full h-full"></canvas>
+            <!-- Coordinate overlay -->
+            <div class="absolute top-3 left-3 font-mono text-xs leading-5 select-none pointer-events-none
+                        bg-black/50 text-white/50 rounded-lg px-3 py-2 backdrop-blur-sm">
+              <div>cam &nbsp;x: <span id="cx">—</span> &nbsp;y: <span id="cy">—</span> &nbsp;z: <span id="cz">—</span></div>
+              <div>target x: <span id="tx">—</span> &nbsp;y: <span id="ty">—</span> &nbsp;z: <span id="tz">—</span></div>
+            </div>
+          </div>
+          <p class="text-xs text-white/20 text-center mt-2">Drag to rotate · Scroll to zoom</p>
+        </div>
+
+      </div>
+
+      <!-- ── RIGHT: Info ── -->
+      <div class="flex-1 flex flex-col gap-6 overflow-y-auto min-h-0 pr-1">
+
+        <!-- Name + status -->
+        <div>
+          <div class="flex items-center gap-3 mb-1">
+            <span class="text-xs font-semibold tracking-widest uppercase text-red-400 bg-red-400/10 border border-red-400/20 rounded-full px-3 py-1">
+              Missing
+            </span>
+            <span class="text-xs text-white/30">Since January 12, 2019</span>
+          </div>
+          <h1 class="text-4xl font-semibold text-white mt-2">James Harlow</h1>
+          <p class="text-sm text-white/50 mt-1">Last seen in Washington Square Park, New York</p>
+        </div>
+
+        <!-- Physical stats -->
+        <div class="grid grid-cols-3 gap-3">
+          <div class="bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+            <p class="text-xs text-white/35 mb-1">Age then / now</p>
+            <p class="text-sm font-semibold text-white">50 → ~57</p>
+          </div>
+          <div class="bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+            <p class="text-xs text-white/35 mb-1">Height</p>
+            <p class="text-sm font-semibold text-white">5'11" (180 cm)</p>
+          </div>
+          <div class="bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+            <p class="text-xs text-white/35 mb-1">Build</p>
+            <p class="text-sm font-semibold text-white">Medium</p>
+          </div>
+          <div class="bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+            <p class="text-xs text-white/35 mb-1">Eyes</p>
+            <p class="text-sm font-semibold text-white">Brown</p>
+          </div>
+          <div class="bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+            <p class="text-xs text-white/35 mb-1">Hair</p>
+            <p class="text-sm font-semibold text-white">Gray / Balding</p>
+          </div>
+          <div class="bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+            <p class="text-xs text-white/35 mb-1">Distinguishing</p>
+            <p class="text-sm font-semibold text-white">Scar on left chin</p>
+          </div>
+        </div>
+
+        <!-- Last outfit worn -->
+        <div>
+          <p class="text-xs font-semibold tracking-widest uppercase text-white/40 mb-3">Last Outfit Worn</p>
+          <div class="flex flex-wrap gap-2">
+            <span class="flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-2 text-sm text-white/80">
+              🧥 Navy blue zip-up jacket
+            </span>
+            <span class="flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-2 text-sm text-white/80">
+              👕 White crew-neck shirt
+            </span>
+            <span class="flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-2 text-sm text-white/80">
+              👖 Dark gray slacks
+            </span>
+            <span class="flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-2 text-sm text-white/80">
+              👟 Black leather loafers
+            </span>
+          </div>
+        </div>
+
+        <!-- Divider -->
+        <div class="border-t border-white/10"></div>
+
+        <!-- I've Seen This Person -->
+        <div x-data="{ open: false, submitted: false }" class="flex flex-col gap-3">
+          <button
+            @click="open = !open"
+            class="flex items-center gap-3 bg-white text-black font-medium text-sm
+                   rounded-full px-7 py-3 w-fit
+                   hover:bg-gray-100 active:scale-[0.98] transition-all duration-200"
+          >
+            <span>👋</span> I've Seen This Person
+          </button>
+          <div x-show="open" x-transition class="flex flex-col gap-3">
+            <div class="flex gap-3">
+              <input type="text" placeholder="Where did you see them?"
+                class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3
+                       text-sm text-white placeholder-white/25
+                       focus:outline-none focus:border-white/30 transition-colors duration-200" />
+              <input type="date"
+                class="bg-white/5 border border-white/10 rounded-xl px-4 py-3
+                       text-sm text-white/70
+                       focus:outline-none focus:border-white/30 transition-colors duration-200" />
+            </div>
+            <textarea rows="2" placeholder="Any additional details (clothing, direction, companions…)"
+              class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3
+                     text-sm text-white placeholder-white/25 resize-none
+                     focus:outline-none focus:border-white/30 transition-colors duration-200"></textarea>
+            <div class="flex items-center gap-3">
+              <button @click="submitted = true; open = false"
+                class="bg-white text-black text-sm font-medium rounded-full px-6 py-2.5
+                       hover:bg-gray-100 active:scale-[0.98] transition-all duration-200">
+                Submit Report
+              </button>
+              <p class="text-xs text-white/30">Your tip will be forwarded to the case officer.</p>
+            </div>
+          </div>
+          <p x-show="submitted" x-transition class="text-sm text-green-400">
+            ✓ Thank you. Your report has been submitted.
+          </p>
+        </div>
+
+        <!-- Share + case ref -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-white/30">Share:</span>
+            <button class="text-xs text-white/50 hover:text-white border border-white/10 rounded-full px-3 py-1.5 transition-colors duration-200">Copy Link</button>
+            <button class="text-xs text-white/50 hover:text-white border border-white/10 rounded-full px-3 py-1.5 transition-colors duration-200">Twitter / X</button>
+            <button class="text-xs text-white/50 hover:text-white border border-white/10 rounded-full px-3 py-1.5 transition-colors duration-200">Instagram</button>
+          </div>
+          <p class="text-xs text-white/20">Report to authorities · Case #JH-2019</p>
+        </div>
+
+      </div>
+    </div>
+
+  {% endcall %}
+</section>
+
+<!-- Spark.js 3D viewer (lazy-initialized on first tab click) -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.178.0/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.178.0/examples/jsm/",
+    "@sparkjsdev/spark": "https://sparkjs.dev/releases/spark/0.1.10/spark.module.js"
+  }
+}
+</script>
+
+<script type="module">
+  import * as THREE from "three";
+  import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+  import { SplatMesh } from "@sparkjsdev/spark";
+
+  window.initSplatViewer = function () {
+    const canvas = document.getElementById("splat-canvas");
+    const container = canvas.parentElement;
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(container.clientWidth, container.clientHeight);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.01, 1000);
+    camera.position.set(0, 0, 3);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.minDistance = 0.5;
+    controls.maxDistance = 20;
+    controls.minPolarAngle = 0;
+    controls.maxPolarAngle = Math.PI / 2;
+    controls.target.set(0, 10.0, 0);
+    controls.update();
+
+    const splat = new SplatMesh({ url: "/static/uploads/gaussians.ply" });
+    splat.position.set(0, 0, 0);
+    scene.add(splat);
+
+    const f = v => v.toFixed(2);
+    const $ = id => document.getElementById(id);
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+      const p = camera.position, t = controls.target;
+      $("cx").textContent = f(p.x); $("cy").textContent = f(p.y); $("cz").textContent = f(p.z);
+      $("tx").textContent = f(t.x); $("ty").textContent = f(t.y); $("tz").textContent = f(t.z);
+    }
+    animate();
+
+    new ResizeObserver(() => {
+      const w = container.clientWidth, h = container.clientHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    }).observe(container);
+  };
+</script>
+{% endblock %}

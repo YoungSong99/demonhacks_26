@@ -231,6 +231,24 @@ def create(request: Request, session_id: str = ""):
     )
 
 
+@app.get("/find")
+def find(request: Request):
+    """Missing persons gallery — shows all registered missing persons with aged photos."""
+    return templates.TemplateResponse("pages/find.html", {"request": request})
+
+
+@app.get("/find/add")
+def find_add(request: Request):
+    """Add a missing person — upload a past photo to generate an aged version."""
+    return templates.TemplateResponse("pages/find_add.html", {"request": request})
+
+
+@app.get("/find/{person_id}")
+def person_detail(request: Request, person_id: str):
+    """Missing person detail page — before/after slider, physical info, outfit, report form."""
+    return templates.TemplateResponse("pages/person_detail.html", {"request": request, "person_id": person_id})
+
+
 @app.get("/preview")
 def preview(request: Request, session_id: str = ""):
     """Step 2 — review aging result and trigger 3D build"""

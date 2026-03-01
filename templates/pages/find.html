@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% from "components/card.html" import glass_card %}
+{% from "components/person_card.html" import person_card %}
+
+{% block content %}
+<section class="min-h-screen flex flex-col items-center justify-center px-6 py-28">
+
+  {% call(caller) glass_card(class="w-[85vw]") %}
+
+    <!-- Header row -->
+    <div class="flex items-start justify-between mb-8">
+      <div>
+        <h1 class="text-3xl font-semibold text-white">Their Face, Today</h1>
+        <p class="text-sm text-white/50 mt-1">
+          Because someone, somewhere, is still waiting to recognize them.
+        </p>
+      </div>
+      <a href="/find/add"
+        class="bg-white text-black text-sm font-medium rounded-full px-6 py-3
+               hover:bg-gray-100 active:scale-[0.98] transition-all duration-200 whitespace-nowrap">
+        Help Find Them
+      </a>
+    </div>
+
+    <!-- Gallery grid -->
+    <div class="grid grid-cols-3 gap-4">
+
+      {{ person_card(
+        name         = "James Harlow",
+        missing_since= "2019",
+        age_now      = "57",
+        last_seen    = "Washington Square Park",
+        photo_url    = "https://placehold.co/300x375/1a1a1a/555?text=James",
+        aged_url     = "https://placehold.co/300x375/111/444?text=Aged",
+        detail_url   = "/find/james-harlow"
+      ) }}
+
+      {{ person_card(
+        name         = "Ethan Cole",
+        missing_since= "2017",
+        age_now      = "43",
+        last_seen    = "Central Station, Chicago",
+        photo_url    = "https://placehold.co/300x375/1a1a1a/555?text=Ethan",
+        aged_url     = "https://placehold.co/300x375/111/444?text=Aged",
+        detail_url   = "/find/ethan-cole"
+      ) }}
+
+      {{ person_card(
+        name         = "Marcus Reid",
+        missing_since= "2021",
+        age_now      = "34",
+        last_seen    = "Venice Beach, Los Angeles",
+        photo_url    = "https://placehold.co/300x375/1a1a1a/555?text=Marcus",
+        aged_url     = "https://placehold.co/300x375/111/444?text=Aged",
+        detail_url   = "/find/marcus-reid"
+      ) }}
+
+    </div>
+
+    <!-- Footer note -->
+    <p class="text-xs text-white/20 text-center mt-6">
+      AI-generated age progressions are estimates only. Please report any leads to your local authorities or call 1-800-THE-LOST.
+    </p>
+
+  {% endcall %}
+
+</section>
+{% endblock %}
