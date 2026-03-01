@@ -1,0 +1,34 @@
+{% macro loading_overlay(message="Processing...", submessage="This may take up to a minute") %}
+<div
+  x-show="loading"
+  x-transition:enter="transition ease-out duration-300"
+  x-transition:enter-start="opacity-0"
+  x-transition:enter-end="opacity-100"
+  class="fixed inset-0 z-50 flex flex-col items-center justify-center gap-6
+         bg-black/75 backdrop-blur-sm"
+  style="display: none;"
+>
+  <!-- Spinner -->
+  <div class="relative w-20 h-20">
+    <!-- Outer ring -->
+    <div class="absolute inset-0 rounded-full border-4 border-white/10"></div>
+    <!-- Spinning arc -->
+    <div class="absolute inset-0 rounded-full border-4 border-transparent border-t-white animate-spin"></div>
+    <!-- Inner pulse -->
+    <div class="absolute inset-3 rounded-full bg-white/5 animate-pulse"></div>
+  </div>
+
+  <!-- Message -->
+  <div class="text-center flex flex-col gap-2">
+    <p class="text-white text-lg font-semibold tracking-tight">{{ message }}</p>
+    <p class="text-white/40 text-sm">{{ submessage }}</p>
+  </div>
+
+  <!-- Animated dots -->
+  <div class="flex gap-1.5">
+    <div class="w-1.5 h-1.5 rounded-full bg-white/40 animate-bounce" style="animation-delay: 0ms"></div>
+    <div class="w-1.5 h-1.5 rounded-full bg-white/40 animate-bounce" style="animation-delay: 150ms"></div>
+    <div class="w-1.5 h-1.5 rounded-full bg-white/40 animate-bounce" style="animation-delay: 300ms"></div>
+  </div>
+</div>
+{% endmacro %}
