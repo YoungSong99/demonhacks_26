@@ -55,20 +55,43 @@ POST /api/build-3d          →    ───────────────
 ## API Routes (server-side processing)
 
 ### `POST /api/age`
-- **Role** : Receives photo and age, forwards to Colab aging model, saves result to memory, then redirects
+- **Role** : Receives photo and target age, runs CLIP-based demographic prediction, forwards all fields to Colab aging model, saves result to memory, then redirects
 - **Input** : `multipart/form-data`
 
   | Field | Type | Description |
   |-------|------|-------------|
   | `photo` | File | Face image (JPEG / PNG / WEBP) |
-  | `age` | int (1–100) | Target age |
+  | `age` | int (1–100) | Target age to age the face to |
+
+- **CLIP Preprocessing** (runs server-side before forwarding to Colab)
+
+  The server uses `openai/clip-vit-base-patch32` to automatically predict two demographic fields from the uploaded photo. These are added to the Colab request and do **not** need to be submitted by the user.
+
+  | Predicted Field | Type | Values | Method |
+  |----------------|------|--------|--------|
+  | `gender` | string | `"male"` / `"female"` | Cosine similarity between image embedding and gender text prompts |
+  | `current_age` | int | `2`, `8`, `16`, `27`, `45`, `68` | Ensemble of 3 prompts per age group; group with highest mean similarity wins |
+
+  **Age groups and center values:**
+
+  | Label | Center | Example prompts (3 per group, averaged) |
+  |-------|--------|----------------------------------------|
+  | baby | 2 | "a photo of a baby or toddler", "a photo of an infant with chubby cheeks", … |
+  | child | 8 | "a photo of a young child", "a portrait of a kid in elementary school", … |
+  | teenager | 16 | "a photo of a teenager", "a portrait of a high school student", … |
+  | young adult | 27 | "a photo of a young adult in their twenties", "a portrait of a college-aged person", … |
+  | middle-aged | 45 | "a photo of a middle-aged person", "a portrait of someone in their forties with slight wrinkles", … |
+  | senior | 68 | "a photo of an elderly person", "a portrait of an old person with white hair and deep wrinkles", … |
+
+- **Fields forwarded to Colab** : `photo`, `age`, `gender` (predicted), `current_age` (predicted)
 
 - **Flow**
   ```
   Receive photo + age
-    → Forward to Colab POST /aging
+    → Run CLIP → predict gender + current_age
+    → Forward to Colab POST /aging  (photo, age, gender, current_age)
     → Receive { image_id }
-    → Save image_store[session_id] = { image_url, age }
+    → Save image_store[session_id] = { image_url, age, gender, current_age }
     → 303 Redirect → GET /preview?session_id={id}
   ```
 - **Colab endpoint** : `POST {COLAB_BASE_URL}/aging`
@@ -141,9 +164,11 @@ POST /api/build-3d          →    ───────────────
 ```python
 image_store = {
     "{session_id}": {
-        "image_url": "https://{ngrok}/aging/{image_id}",  # Colab aging result URL
-        "age": 45,                                         # Target age
-        "model_url": "https://{ngrok}/3d/{model_id}",     # Colab 3D result URL (optional)
+        "image_url":    "https://{ngrok}/aging/{image_id}",  # Colab aging result URL
+        "age":          45,                                    # Target age (user input)
+        "gender":       "female",                             # CLIP-predicted gender
+        "current_age":  27,                                   # CLIP-predicted current age (center value)
+        "model_url":    "https://{ngrok}/3d/{model_id}",     # Colab 3D result URL (optional)
     }
 }
 ```
