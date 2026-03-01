@@ -86,7 +86,7 @@ def create(request: Request, session_id: str = ""):
     """Step 1 — 사진 업로드 + 나이 입력. session_id가 있으면 이전 데이터 pre-fill"""
     entry = image_store.get(session_id)
     return templates.TemplateResponse(
-        "pages/aging.html",
+        "pages/create.html",
         {
             "request": request,
             "session_id": session_id,
@@ -101,7 +101,7 @@ def preview(request: Request, session_id: str = ""):
     """Step 2 — aging 결과 확인 + 3D 빌드"""
     entry = image_store.get(session_id)
     return templates.TemplateResponse(
-        "pages/three_d.html",
+        "pages/preview.html",
         {
             "request": request,
             "session_id": session_id,
