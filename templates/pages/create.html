@@ -15,20 +15,20 @@
     <!-- ───── STEP 1 ───── -->
     <div x-show="step === 1" x-transition class="flex flex-col gap-6">
 
-      <p class="text-xs font-semibold tracking-widest text-white/40 uppercase font-[Inter]">Step 1</p>
+      <p class="text-xs font-semibold tracking-widest text-white/40 uppercase">Step 1</p>
 
       <div class="flex flex-col gap-2">
-        <h1 class="text-3xl font-semibold text-white leading-snug font-[Inter]">
+        <h1 class="text-3xl font-semibold text-white leading-snug">
           See them through time
         </h1>
-        <p class="text-sm text-white/50 font-[Inter]">
+        <p class="text-sm text-white/50">
           Upload a photo and choose an age. We'll show you who they might have become.
         </p>
       </div>
 
       <!-- Age Input -->
       <div class="flex flex-col gap-2">
-        <label for="age-input" class="text-sm font-semibold text-white font-[Inter]">Age them to</label>
+        <label for="age-input" class="text-sm font-semibold text-white">Age them to</label>
         <input
           id="age-input"
           name="age"
@@ -37,7 +37,7 @@
           max="100"
           placeholder="Enter any age between 1 and 100"
           {% if prev_age %}value="{{ prev_age }}"{% endif %}
-          class="w-full bg-white text-gray-400 text-sm font-[Inter]
+          class="w-full bg-white text-gray-400 text-sm
                  rounded-xl px-4 py-3 placeholder-gray-400
                  focus:outline-none focus:ring-2 focus:ring-white/30
                  transition-all duration-200
@@ -49,11 +49,11 @@
 
       <!-- Photo Upload -->
       <div class="flex flex-col gap-2">
-        <label class="text-sm font-semibold text-white font-[Inter]">Their Photo</label>
+        <label class="text-sm font-semibold text-white">Their Photo</label>
         {% if prev_image_url %}
         <div class="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl px-4 py-3">
           <img src="{{ prev_image_url }}" class="w-10 h-10 rounded-lg object-cover" />
-          <p class="text-sm text-white/60 font-[Inter]">Using previous photo — upload a new file to replace it</p>
+          <p class="text-sm text-white/60">Using previous photo — upload a new file to replace it</p>
         </div>
         {% endif %}
         <label
@@ -71,7 +71,7 @@
             <path stroke-linecap="round" stroke-linejoin="round"
               d="M3 16.5V19a1.5 1.5 0 001.5 1.5h15A1.5 1.5 0 0021 19v-2.5M16 8l-4-4m0 0L8 8m4-4v12" />
           </svg>
-          <p class="text-sm text-gray-400 font-[Inter]"
+          <p class="text-sm text-gray-400"
              x-text="fileName ? fileName : 'Upload a clear photo of their face'"></p>
           <input
             x-ref="photoInput"
@@ -89,7 +89,7 @@
       <div>
         <button
           type="submit"
-          class="bg-black text-white font-medium text-sm font-[Inter]
+          class="bg-black text-white font-medium text-sm
                  border border-white/30 rounded-full px-8 py-3
                  hover:bg-white/10 active:scale-[0.98]
                  transition-all duration-200"

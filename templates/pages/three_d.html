@@ -9,27 +9,27 @@
 
     {% if image_url %}
     <div class="flex-shrink-0 flex flex-col gap-3">
-      <p class="text-xs font-semibold tracking-widest text-white/40 uppercase font-[Inter]">Result</p>
+      <p class="text-xs font-semibold tracking-widest text-white/40 uppercase">Result</p>
       <img
         src="{{ image_url }}"
         alt="Aged photo"
         class="w-64 h-64 object-cover rounded-2xl border border-white/10"
       />
       {% if age %}
-      <p class="text-sm text-white/50 font-[Inter] text-center">Age {{ age }}</p>
+      <p class="text-sm text-white/50 text-center">Age {{ age }}</p>
       {% endif %}
     </div>
     {% endif %}
 
     <div class="flex flex-col gap-6 flex-1">
 
-      <p class="text-xs font-semibold tracking-widest text-white/40 uppercase font-[Inter]">Step 2</p>
+      <p class="text-xs font-semibold tracking-widest text-white/40 uppercase">Step 2</p>
 
       <div class="flex flex-col gap-2">
-        <h1 class="text-3xl font-semibold text-white leading-snug font-[Inter]">
+        <h1 class="text-3xl font-semibold text-white leading-snug">
           See Them in 3D
         </h1>
-        <p class="text-sm text-white/50 font-[Inter]">
+        <p class="text-sm text-white/50">
           We'll transform their portrait into a 3D presence you can see from every angle.
         </p>
       </div>
@@ -40,7 +40,7 @@
         <!-- Prev: 이전 세션 데이터를 유지한 채로 aging 폼으로 복귀 -->
         <a
           href="/create?session_id={{ session_id }}"
-          class="bg-black text-white font-medium text-sm font-[Inter]
+          class="bg-black text-white font-medium text-sm
                  border border-white/30 rounded-full px-8 py-3
                  hover:bg-white/10 active:scale-[0.98]
                  transition-all duration-200"
@@ -53,7 +53,7 @@
           <input type="hidden" name="session_id" value="{{ session_id }}" />
           <button
             type="submit"
-            class="bg-white text-black font-medium text-sm font-[Inter]
+            class="bg-white text-black font-medium text-sm
                    rounded-full px-8 py-3
                    hover:bg-gray-100 active:scale-[0.98]
                    transition-all duration-200"
