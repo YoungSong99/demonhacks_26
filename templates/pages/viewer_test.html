@@ -97,7 +97,7 @@
     0.01,
     1000
   );
-  camera.position.set(0, 0, 3);
+  camera.position.set(0, 0, 0);
 
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
@@ -115,6 +115,7 @@
 
   const splat = new SplatMesh({ url: "{{ model_url }}" });
   splat.position.set(0, 0, 0);
+  splat.rotation.x = -Math.PI / 2
   scene.add(splat);
 
   function animate() {
