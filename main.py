@@ -72,6 +72,25 @@ def _get_from_colab(url: str) -> bytes:
         return resp.read()
 
 
+# ── DEV ONLY ───────────────────────────────────────────────────────────────────
+# Test the 3D viewer locally without a running Colab server.
+# PLY file must be placed in static/uploads/gaussians.ply
+# Visit: http://localhost:8000/test/viewer
+
+@app.get("/test/viewer")
+def test_viewer(request: Request):
+    return templates.TemplateResponse(
+        "pages/viewer.html",
+        {
+            "request": request,
+            "session_id": "test",
+            "image_url": "",
+            "model_url": "/static/uploads/gaussians.ply",
+            "age": 0,
+        }
+    )
+
+
 # ── PAGE  ──────────────────────────────────────────────────────────────
 
 @app.get("/")
