@@ -13,7 +13,7 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-COLAB_BASE_URL = "https://b806-146-148-108-227.ngrok-free.app"
+COLAB_BASE_URL = "https://a9a4-146-148-108-227.ngrok-free.app"
 
 # 메모리 저장소: { session_id: { "image_url": str, "age": int } }
 image_store: dict = {}
@@ -81,7 +81,7 @@ def home(request: Request):
     return templates.TemplateResponse("pages/home.html", {"request": request})
 
 
-@app.get("/create")                          # 구: /recreate
+@app.get("/create")
 def create(request: Request, session_id: str = ""):
     """Step 1 — 사진 업로드 + 나이 입력. session_id가 있으면 이전 데이터 pre-fill"""
     entry = image_store.get(session_id)
@@ -96,7 +96,7 @@ def create(request: Request, session_id: str = ""):
     )
 
 
-@app.get("/preview")                         # 구: /three_d
+@app.get("/preview")
 def preview(request: Request, session_id: str = ""):
     """Step 2 — aging 결과 확인 + 3D 빌드"""
     entry = image_store.get(session_id)
@@ -113,7 +113,7 @@ def preview(request: Request, session_id: str = ""):
 
 # ── API 라우트 ─────────────────────────────────────────────────────────────────
 
-@app.post("/api/age")                        # 구: /aging
+@app.post("/api/age")
 async def api_age(
     photo: UploadFile = File(...),
     age: int = Form(...),
@@ -125,7 +125,7 @@ async def api_age(
     result = await loop.run_in_executor(
         None,
         _post_age_to_colab,
-        f"{COLAB_BASE_URL}/aging",
+        f"{COLAB_BASE_URL}/api/age",
         photo.filename,
         photo.content_type or "image/jpeg",
         contents,
@@ -135,14 +135,14 @@ async def api_age(
     image_id = result["image_id"]
     session_id = str(uuid.uuid4())
     image_store[session_id] = {
-        "image_url": f"{COLAB_BASE_URL}/aging/{image_id}",
+        "image_url": f"{COLAB_BASE_URL}/api/images/{image_id}",
         "age": age,
     }
 
     return RedirectResponse(url=f"/preview?session_id={session_id}", status_code=303)
 
 
-@app.get("/api/images/{session_id}")         # 구: /aging/{session_id}
+@app.get("/api/images/{session_id}")
 async def api_get_image(session_id: str):
     """aging 결과 이미지를 Colab에서 프록시"""
     entry = image_store.get(session_id)
@@ -155,7 +155,7 @@ async def api_get_image(session_id: str):
     return Response(content=image_bytes, media_type="image/jpeg")
 
 
-@app.post("/api/build-3d")                   # 구: /build_3d
+@app.post("/api/build-3d")
 async def api_build_3d(session_id: str = Form(...)):
     """aging 결과 이미지를 Colab 3D 엔드포인트로 전송"""
     entry = image_store.get(session_id)
@@ -169,12 +169,11 @@ async def api_build_3d(session_id: str = Form(...)):
     result = await loop.run_in_executor(
         None,
         _post_file_to_colab,
-        f"{COLAB_BASE_URL}/3d",
+        f"{COLAB_BASE_URL}/api/build-3d",
         f"{session_id}.jpg",
         "image/jpeg",
         image_bytes,
     )
 
-    image_store[session_id]["model_url"] = f"{COLAB_BASE_URL}/3d/{result['model_id']}"
-
+    image_store[session_id]["model_url"] = f"{COLAB_BASE_URL}/api/models/{result['model_id']}"
     return RedirectResponse(url=f"/preview?session_id={session_id}", status_code=303)
