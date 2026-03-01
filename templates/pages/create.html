@@ -1,7 +1,10 @@
 {% extends "base.html" %}
 {% from "components/card.html" import glass_card %}
+{% from "components/loading_overlay.html" import loading_overlay %}
 
 {% block content %}
+{{ loading_overlay("Aging their photo…", "AI is working — this usually takes about a minute") }}
+
 <section class="min-h-screen flex flex-col items-center justify-center px-6">
 
   {% call(caller) glass_card(class="w-[70vw]") %}
@@ -9,7 +12,8 @@
     action="/api/age"
     method="POST"
     enctype="multipart/form-data"
-    x-data="{ step: 1 }"
+    x-data="{ step: 1, loading: false }"
+    @submit="loading = true"
   >
 
     <!-- ───── STEP 1 ───── -->
@@ -89,12 +93,14 @@
       <div>
         <button
           type="submit"
+          :disabled="loading"
+          :class="loading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/10 active:scale-[0.98]'"
           class="bg-black text-white font-medium text-sm
                  border border-white/30 rounded-full px-8 py-3
-                 hover:bg-white/10 active:scale-[0.98]
                  transition-all duration-200"
         >
-          Next
+          <span x-show="!loading">Next</span>
+          <span x-show="loading">Processing…</span>
         </button>
       </div>
 
