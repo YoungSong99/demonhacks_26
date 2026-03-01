@@ -1,7 +1,11 @@
+import io
 import uuid
 import asyncio
 import urllib.request
 import json
+import torch
+from PIL import Image
+from transformers import CLIPProcessor, CLIPModel
 
 from fastapi import FastAPI, Request, File, UploadFile, Form
 from fastapi.templating import Jinja2Templates
@@ -14,12 +18,75 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 COLAB_BASE_URL = "https://blockish-fran-contently.ngrok-free.dev"
+
+# In-memory store: { session_id: { "image_url": str, "age": int, ... } }
 image_store: dict = {}
 
+# ── CLIP model (loaded once at startup) ───────────────────────────────────────
+print("Loading CLIP model...")
+_clip_model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
+_clip_processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+_clip_model.eval()
+print("CLIP model ready.")
 
-def _post_age_to_colab(url: str, filename: str, content_type: str, data: bytes, age: int) -> dict:
-    """Aging: sends file + age to Colab"""
+
+def predict_demographics(image_bytes: bytes) -> dict:
+    """
+    Predicts gender and current age from a face image using CLIP.
+    Returns: { "gender": "male"|"female", "current_age": int }
+    """
+    image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+
+    # ── Gender prediction ──────────────────────────────────────────────────────
+    gender_texts = [
+        "a photo of a male face",
+        "a photo of a female face",
+    ]
+    inputs = _clip_processor(text=gender_texts, images=image, return_tensors="pt", padding=True)
+    with torch.no_grad():
+        outputs = _clip_model(**inputs)
+    similarities = torch.nn.functional.cosine_similarity(
+        outputs.image_embeds, outputs.text_embeds
+    )
+    gender = "male" if similarities.argmax().item() == 0 else "female"
+
+    # ── Age prediction ─────────────────────────────────────────────────────────
+    age_texts = [
+        "a photo of a child aged 0 to 12",
+        "a photo of a teenager aged 13 to 19",
+        "a photo of a young adult aged 20 to 35",
+        "a photo of a middle-aged person aged 36 to 55",
+        "a photo of an elderly person aged 56 to 80",
+    ]
+    age_centers = [6, 16, 27, 45, 68]
+
+    inputs = _clip_processor(text=age_texts, images=image, return_tensors="pt", padding=True)
+    with torch.no_grad():
+        outputs = _clip_model(**inputs)
+    similarities = torch.nn.functional.cosine_similarity(
+        outputs.image_embeds, outputs.text_embeds
+    )
+    current_age = age_centers[similarities.argmax().item()]
+    print(gender, current_age)
+
+    return {"gender": gender, "current_age": current_age}
+
+
+# ── Colab helpers ──────────────────────────────────────────────────────────────
+
+def _post_age_to_colab(
+    url: str, filename: str, content_type: str, data: bytes,
+    age: int, gender: str, current_age: int
+) -> dict:
+    """Aging: sends file + age + gender + current_age to Colab"""
     boundary = "----FormBoundary" + uuid.uuid4().hex
+
+    def field(name, value):
+        return (
+            f"--{boundary}\r\n"
+            f'Content-Disposition: form-data; name="{name}"\r\n\r\n'
+            f"{value}\r\n"
+        ).encode()
 
     body = (
         f"--{boundary}\r\n"
@@ -27,12 +94,9 @@ def _post_age_to_colab(url: str, filename: str, content_type: str, data: bytes, 
         f"Content-Type: {content_type}\r\n\r\n"
     ).encode() + data + b"\r\n"
 
-    body += (
-        f"--{boundary}\r\n"
-        f'Content-Disposition: form-data; name="age"\r\n\r\n'
-        f"{age}\r\n"
-    ).encode()
-
+    body += field("age", age)
+    body += field("gender", gender)
+    body += field("current_age", current_age)
     body += f"--{boundary}--\r\n".encode()
 
     req = urllib.request.Request(
@@ -91,7 +155,7 @@ def test_viewer(request: Request):
     )
 
 
-# ── PAGE  ──────────────────────────────────────────────────────────────
+# ── PAGE ROUTES ────────────────────────────────────────────────────────────────
 
 @app.get("/")
 def home(request: Request):
@@ -128,17 +192,40 @@ def preview(request: Request, session_id: str = ""):
     )
 
 
-# ── API  ─────────────────────────────────────────────────────────────────
+@app.get("/viewer")
+def viewer(request: Request, session_id: str = ""):
+    """Step 3 — 3D model viewer"""
+    entry = image_store.get(session_id)
+    return templates.TemplateResponse(
+        "pages/viewer.html",
+        {
+            "request": request,
+            "session_id": session_id,
+            "image_url": f"/api/images/{session_id}" if entry else "",
+            "model_url": f"/api/models/{session_id}" if entry and entry.get("model_url") else "",
+            "age": entry["age"] if entry else 0,
+        }
+    )
+
+
+# ── API ROUTES ─────────────────────────────────────────────────────────────────
 
 @app.post("/api/age")
 async def api_age(
     photo: UploadFile = File(...),
     age: int = Form(...),
 ):
-    """Receives photo + age, forwards to Colab aging model, redirects to /preview"""
+    """
+    Preprocessing with CLIP → forward to Colab aging model → redirect to /preview.
+    CLIP predicts gender and current age from the uploaded photo.
+    """
     contents = await photo.read()
     loop = asyncio.get_event_loop()
 
+    # Step 1: predict demographics with CLIP (runs in thread pool)
+    demographics = await loop.run_in_executor(None, predict_demographics, contents)
+
+    # Step 2: forward image + age + CLIP predictions to Colab
     result = await loop.run_in_executor(
         None,
         _post_age_to_colab,
@@ -147,6 +234,8 @@ async def api_age(
         photo.content_type or "image/jpeg",
         contents,
         age,
+        demographics["gender"],
+        demographics["current_age"],
     )
 
     image_id = result["image_id"]
@@ -154,6 +243,8 @@ async def api_age(
     image_store[session_id] = {
         "image_url": f"{COLAB_BASE_URL}/api/images/{image_id}",
         "age": age,
+        "gender": demographics["gender"],
+        "current_age": demographics["current_age"],
     }
 
     return RedirectResponse(url=f"/preview?session_id={session_id}", status_code=303)
@@ -170,22 +261,6 @@ async def api_get_image(session_id: str):
     image_bytes = await loop.run_in_executor(None, _get_from_colab, entry["image_url"])
 
     return Response(content=image_bytes, media_type="image/jpeg")
-
-
-@app.get("/viewer")
-def viewer(request: Request, session_id: str = ""):
-    """Step 3 — 3D model viewer"""
-    entry = image_store.get(session_id)
-    return templates.TemplateResponse(
-        "pages/viewer.html",
-        {
-            "request": request,
-            "session_id": session_id,
-            "image_url": f"/api/images/{session_id}" if entry else "",
-            "model_url": f"/api/models/{session_id}" if entry and entry.get("model_url") else "",
-            "age": entry["age"] if entry else 0,
-        }
-    )
 
 
 @app.get("/api/models/{session_id}")
