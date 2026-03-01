@@ -1,0 +1,8 @@
+{% macro glass_card(class="") %}
+<div
+        class="rounded-[1.875rem] border border-white/30
+       bg-black/50 backdrop-blur-md
+       px-10 py-10 text-white {{ class }}">
+    {{ caller() }}
+</div>
+{% endmacro %}
