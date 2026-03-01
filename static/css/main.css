@@ -1,0 +1,25 @@
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-800 antialiased;
+  }
+
+  h1 {
+    @apply text-3xl font-bold tracking-tight;
+  }
+
+  h2 {
+    @apply text-2xl font-semibold;
+  }
+
+  a {
+    @apply text-blue-600 hover:text-blue-700 transition;
+  }
+
+  button {
+    @apply transition duration-200;
+  }
+}

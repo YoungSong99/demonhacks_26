@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="min-h-screen flex flex-col items-center justify-center gap-10">
+
+  <!-- Hero Text -->
+  <div class="text-center font-[Inter] text-[6rem] font-semibold leading-none tracking-[-0.6rem] text-white/85">
+    <h1 class="relative inline-block">
+      <span class="absolute inset-0 blur-md opacity-40 bg-white/20 [mask-image:linear-gradient(to_bottom,white,transparent)]"></span>
+      <span class="relative">
+        See them as they were.<br />
+        Imagine who they'd be.
+      </span>
+    </h1>
+  </div>
+
+  <!-- 아래 설명 + 버튼 -->
+  <div class="absolute  bottom-32 right-60 items-center gap-10 max-w-md ">
+    <p class="text-white/75 text-[18px] leading-relaxed font-[Inter]">
+      Turn one photo into a lifetime of faces.
+      Remember them, or help bring them home.
+    </p>
+
+    <button
+      class="bg-white rounded-full font-medium text-black
+             mt-5 px-7 py-3 text-sm
+             hover:bg-gray-100 transition-colors duration-200">
+      Start With a Photo
+    </button>
+  </div>
+
+</section>
+{% endblock %}
