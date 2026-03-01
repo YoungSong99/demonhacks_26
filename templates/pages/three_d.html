@@ -37,7 +37,7 @@
       <!-- Buttons -->
       <div class="flex items-center gap-4 mt-2">
 
-        <!-- Prev: 이전 세션 데이터를 유지한 채로 aging 폼으로 복귀 -->
+        <!-- Prev: return to aging form with session data preserved -->
         <a
           href="/create?session_id={{ session_id }}"
           class="bg-black text-white font-medium text-sm
@@ -48,7 +48,7 @@
           Prev
         </a>
 
-        <!-- Build in 3D: aging 결과 이미지를 Colab 3D 엔드포인트로 전송 -->
+        <!-- Build in 3D: send aged image to Colab 3D endpoint -->
         <form action="/api/build-3d" method="POST">
           <input type="hidden" name="session_id" value="{{ session_id }}" />
           <button
