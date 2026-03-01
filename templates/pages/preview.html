@@ -1,7 +1,10 @@
 {% extends "base.html" %}
 {% from "components/card.html" import glass_card %}
+{% from "components/loading_overlay.html" import loading_overlay %}
 
 {% block content %}
+{{ loading_overlay("Building 3D model…", "3D reconstruction in progress — this may take a few minutes") }}
+
 <section class="min-h-screen flex flex-col items-center justify-center px-6">
 
   {% call(caller) glass_card(class="w-[70vw]") %}
@@ -37,7 +40,7 @@
       <!-- Buttons -->
       <div class="flex items-center gap-4 mt-2">
 
-        <!-- Prev: return to the aging form while keeping the previous session data -->
+        <!-- Prev -->
         <a
           href="/create?session_id={{ session_id }}"
           class="bg-black text-white font-medium text-sm
@@ -48,17 +51,21 @@
           Prev
         </a>
 
-        <!-- Build in 3D: sends the aged image to the Colab 3D endpoint -->
-        <form action="/api/build-3d" method="POST">
+        <!-- Build in 3D -->
+        <form action="/api/build-3d" method="POST"
+              x-data="{ loading: false }"
+              @submit="loading = true">
           <input type="hidden" name="session_id" value="{{ session_id }}" />
           <button
             type="submit"
+            :disabled="loading"
+            :class="loading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 active:scale-[0.98]'"
             class="bg-white text-black font-medium text-sm
                    rounded-full px-8 py-3
-                   hover:bg-gray-100 active:scale-[0.98]
                    transition-all duration-200"
           >
-            Build in 3D
+            <span x-show="!loading">Build in 3D</span>
+            <span x-show="loading">Processing…</span>
           </button>
         </form>
 
