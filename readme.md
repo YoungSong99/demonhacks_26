@@ -59,6 +59,9 @@ Key characteristics:
 The final output is a Gaussian Splat representation that can be visualized interactively.
 
 ---
+
+## Motivation
+
 A single photograph captures only one moment in time and one viewpoint.
 
 This project explores what happens when:
