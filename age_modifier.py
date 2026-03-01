@@ -10,14 +10,21 @@ from diffusers import StableDiffusionPipeline, DDIMScheduler
 from FADING_util import util
 from p2p import *
 from null_inversion import *
+import io
+from PIL import Image
+import tempfile
 
 ##################################
 specialized_path = "./FADING_stable/finetune_double_prompt_150_random"
-image_path = "./000.jpg"
 
 class AgeModifier:
-    def __init__(self, image, init_age, target_age, gender):
-        self.image = image
+    def __init__(self, image_bytes, init_age, target_age, gender):
+        self.image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+        tmp = tempfile.NamedTemporaryFile(suffix=".jpg", delete=False)
+
+        self.image.save(tmp.name)
+        self.image_path = tmp.name
+        tmp.close()
         self.init_age = init_age
         self.target_age = target_age # we have only one target age
         self.gt_gender = int(gender == 'female')
@@ -39,7 +46,7 @@ class AgeModifier:
         # %% null text inversion
         # image preprocessing + create latent representation
         null_inversion = NullInversion(self.ldm_stable)
-        (image_gt, image_enc), x_t, uncond_embeddings = null_inversion.invert(image_path, self.inversion_prompt,
+        (image_gt, image_enc), x_t, uncond_embeddings = null_inversion.invert(self.image_path, self.inversion_prompt,
                                                                               offsets=(0, 0, 0, 0), verbose=True)
 
         # generate new prompt
@@ -72,6 +79,8 @@ class AgeModifier:
 
 
 def main():
+    """
+    
     test_img = "000.jpg"
     test_init_age = 22
     test_target_age = 30
@@ -79,6 +88,8 @@ def main():
 
     modifier = AgeModifier(test_img, test_init_age, test_target_age, test_gender)
     modifier.generate_age_img()
+    """
+
 
 
 if __name__ == "__main__":
